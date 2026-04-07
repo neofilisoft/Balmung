@@ -1,0 +1,291 @@
+// AsterCore Physics Library (https://github.com/jrouwe/AsterCorePhysics)
+// SPDX-FileCopyrightText: 2021 Jorrit Rouwe
+// SPDX-License-Identifier: MIT
+
+#pragma once
+
+#include <AsterCore/Math/Double3.h>
+
+ACPH_NAMESPACE_BEGIN
+
+/// 3 component vector of doubles (stored as 4 vectors).
+/// Note that we keep the 4th component the same as the 3rd component to avoid divisions by zero when ACPH_FLOATING_POINT_EXCEPTIONS_ENABLED defined
+class [[nodiscard]] alignas(ACPH_DVECTOR_ALIGNMENT) DVec3
+{
+public:
+	ACPH_OVERRIDE_NEW_DELETE
+
+	// Underlying vector type
+#if defined(ACPH_USE_AVX)
+	using Type = __m256d;
+	using TypeArg = __m256d;
+#elif defined(ACPH_USE_SSE)
+	using Type = struct { __m128d mLow, mHigh; };
+	using TypeArg = const Type &;
+#elif defined(ACPH_USE_NEON)
+	using Type = float64x2x2_t;
+	using TypeArg = const Type &;
+#else
+	using Type = struct { double mData[4]; };
+	using TypeArg = const Type &;
+#endif
+
+	// Argument type
+	using ArgType = DVec3Arg;
+
+	/// Constructor
+								DVec3() = default; ///< Intentionally not initialized for performance reasons
+								DVec3(const DVec3 &inRHS) = default;
+	DVec3 &						operator = (const DVec3 &inRHS) = default;
+	ACPH_INLINE explicit			DVec3(Vec3Arg inRHS);
+	ACPH_INLINE explicit			DVec3(Vec4Arg inRHS);
+	ACPH_INLINE					DVec3(TypeArg inRHS) : mValue(inRHS)			{ CheckW(); }
+
+	/// Create a vector from 3 components
+	ACPH_INLINE					DVec3(double inX, double inY, double inZ);
+
+	/// Load 3 doubles from memory
+	explicit ACPH_INLINE			DVec3(const Double3 &inV);
+
+	/// Vector with all zeros
+	static ACPH_INLINE DVec3		sZero();
+
+	/// Vector with all ones
+	static ACPH_INLINE DVec3		sOne();
+
+	/// Vectors with the principal axis
+	static ACPH_INLINE DVec3		sAxisX()										{ return DVec3(1, 0, 0); }
+	static ACPH_INLINE DVec3		sAxisY()										{ return DVec3(0, 1, 0); }
+	static ACPH_INLINE DVec3		sAxisZ()										{ return DVec3(0, 0, 1); }
+
+	/// Replicate inV across all components
+	static ACPH_INLINE DVec3		sReplicate(double inV);
+
+	/// Vector with all NaN's
+	static ACPH_INLINE DVec3		sNaN();
+
+	/// Load 3 doubles from memory (reads 64 bits extra which it doesn't use)
+	static ACPH_INLINE DVec3		sLoadDouble3Unsafe(const Double3 &inV);
+
+	/// Store 3 doubles to memory
+	ACPH_INLINE void				StoreDouble3(Double3 *outV) const;
+
+	/// Convert to float vector 3 rounding to nearest
+	ACPH_INLINE explicit			operator Vec3() const;
+
+	/// Prepare to convert to float vector 3 rounding towards zero (returns DVec3 that can be converted to a Vec3 to get the rounding)
+	ACPH_INLINE DVec3			PrepareRoundToZero() const;
+
+	/// Prepare to convert to float vector 3 rounding towards positive/negative inf (returns DVec3 that can be converted to a Vec3 to get the rounding)
+	ACPH_INLINE DVec3			PrepareRoundToInf() const;
+
+	/// Convert to float vector 3 rounding down
+	ACPH_INLINE Vec3				ToVec3RoundDown() const;
+
+	/// Convert to float vector 3 rounding up
+	ACPH_INLINE Vec3				ToVec3RoundUp() const;
+
+	/// Return the minimum value of each of the components
+	static ACPH_INLINE DVec3		sMin(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Return the maximum of each of the components
+	static ACPH_INLINE DVec3		sMax(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Clamp a vector between min and max (component wise)
+	static ACPH_INLINE DVec3		sClamp(DVec3Arg inV, DVec3Arg inMin, DVec3Arg inMax);
+
+	/// Equals (component wise)
+	static ACPH_INLINE DVec3		sEquals(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Less than (component wise)
+	static ACPH_INLINE DVec3		sLess(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Less than or equal (component wise)
+	static ACPH_INLINE DVec3		sLessOrEqual(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Greater than (component wise)
+	static ACPH_INLINE DVec3		sGreater(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Greater than or equal (component wise)
+	static ACPH_INLINE DVec3		sGreaterOrEqual(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Calculates inMul1 * inMul2 + inAdd
+	static ACPH_INLINE DVec3		sFusedMultiplyAdd(DVec3Arg inMul1, DVec3Arg inMul2, DVec3Arg inAdd);
+
+	/// Component wise select, returns inNotSet when highest bit of inControl = 0 and inSet when highest bit of inControl = 1
+	static ACPH_INLINE DVec3		sSelect(DVec3Arg inNotSet, DVec3Arg inSet, DVec3Arg inControl);
+
+	/// Logical or (component wise)
+	static ACPH_INLINE DVec3		sOr(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Logical xor (component wise)
+	static ACPH_INLINE DVec3		sXor(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Logical and (component wise)
+	static ACPH_INLINE DVec3		sAnd(DVec3Arg inV1, DVec3Arg inV2);
+
+	/// Store if X is true in bit 0, Y in bit 1, Z in bit 2 and W in bit 3 (true is when highest bit of component is set)
+	ACPH_INLINE int				GetTrues() const;
+
+	/// Test if any of the components are true (true is when highest bit of component is set)
+	ACPH_INLINE bool				TestAnyTrue() const;
+
+	/// Test if all components are true (true is when highest bit of component is set)
+	ACPH_INLINE bool				TestAllTrue() const;
+
+	/// Get individual components
+#if defined(ACPH_USE_AVX)
+	ACPH_INLINE double			GetX() const									{ return _mm_cvtsd_f64(_mm256_castpd256_pd128(mValue)); }
+	ACPH_INLINE double			GetY() const									{ return mF64[1]; }
+	ACPH_INLINE double			GetZ() const									{ return mF64[2]; }
+#elif defined(ACPH_USE_SSE)
+	ACPH_INLINE double			GetX() const									{ return _mm_cvtsd_f64(mValue.mLow); }
+	ACPH_INLINE double			GetY() const									{ return mF64[1]; }
+	ACPH_INLINE double			GetZ() const									{ return _mm_cvtsd_f64(mValue.mHigh); }
+#elif defined(ACPH_USE_NEON)
+	ACPH_INLINE double			GetX() const									{ return vgetq_lane_f64(mValue.val[0], 0); }
+	ACPH_INLINE double			GetY() const									{ return vgetq_lane_f64(mValue.val[0], 1); }
+	ACPH_INLINE double			GetZ() const									{ return vgetq_lane_f64(mValue.val[1], 0); }
+#else
+	ACPH_INLINE double			GetX() const									{ return mF64[0]; }
+	ACPH_INLINE double			GetY() const									{ return mF64[1]; }
+	ACPH_INLINE double			GetZ() const									{ return mF64[2]; }
+#endif
+
+	/// Set individual components
+	ACPH_INLINE void				SetX(double inX)								{ mF64[0] = inX; }
+	ACPH_INLINE void				SetY(double inY)								{ mF64[1] = inY; }
+	ACPH_INLINE void				SetZ(double inZ)								{ mF64[2] = mF64[3] = inZ; } // Assure Z and W are the same
+
+	/// Set all components
+	ACPH_INLINE void				Set(double inX, double inY, double inZ)			{ *this = DVec3(inX, inY, inZ); }
+
+	/// Get double component by index
+	ACPH_INLINE double			operator [] (uint inCoordinate) const			{ ACPH_ASSERT(inCoordinate < 3); return mF64[inCoordinate]; }
+
+	/// Set double component by index
+	ACPH_INLINE void				SetComponent(uint inCoordinate, double inValue)	{ ACPH_ASSERT(inCoordinate < 3); mF64[inCoordinate] = inValue; mValue = sFixW(mValue); } // Assure Z and W are the same
+
+	/// Comparison
+	ACPH_INLINE bool				operator == (DVec3Arg inV2) const;
+	ACPH_INLINE bool				operator != (DVec3Arg inV2) const				{ return !(*this == inV2); }
+
+	/// Test if two vectors are close
+	ACPH_INLINE bool				IsClose(DVec3Arg inV2, double inMaxDistSq = 1.0e-24) const;
+
+	/// Test if vector is near zero
+	ACPH_INLINE bool				IsNearZero(double inMaxDistSq = 1.0e-24) const;
+
+	/// Test if vector is normalized
+	ACPH_INLINE bool				IsNormalized(double inTolerance = 1.0e-12) const;
+
+	/// Test if vector contains NaN elements
+	ACPH_INLINE bool				IsNaN() const;
+
+	/// Multiply two double vectors (component wise)
+	ACPH_INLINE DVec3			operator * (DVec3Arg inV2) const;
+
+	/// Multiply vector with double
+	ACPH_INLINE DVec3			operator * (double inV2) const;
+
+	/// Multiply vector with double
+	friend ACPH_INLINE DVec3		operator * (double inV1, DVec3Arg inV2);
+
+	/// Divide vector by double
+	ACPH_INLINE DVec3			operator / (double inV2) const;
+
+	/// Multiply vector with double
+	ACPH_INLINE DVec3 &			operator *= (double inV2);
+
+	/// Multiply vector with vector
+	ACPH_INLINE DVec3 &			operator *= (DVec3Arg inV2);
+
+	/// Divide vector by double
+	ACPH_INLINE DVec3 &			operator /= (double inV2);
+
+	/// Add two vectors (component wise)
+	ACPH_INLINE DVec3			operator + (Vec3Arg inV2) const;
+
+	/// Add two double vectors (component wise)
+	ACPH_INLINE DVec3			operator + (DVec3Arg inV2) const;
+
+	/// Add two vectors (component wise)
+	ACPH_INLINE DVec3 &			operator += (Vec3Arg inV2);
+
+	/// Add two double vectors (component wise)
+	ACPH_INLINE DVec3 &			operator += (DVec3Arg inV2);
+
+	/// Negate
+	ACPH_INLINE DVec3			operator - () const;
+
+	/// Subtract two vectors (component wise)
+	ACPH_INLINE DVec3			operator - (Vec3Arg inV2) const;
+
+	/// Subtract two double vectors (component wise)
+	ACPH_INLINE DVec3			operator - (DVec3Arg inV2) const;
+
+	/// Subtract two vectors (component wise)
+	ACPH_INLINE DVec3 &			operator -= (Vec3Arg inV2);
+
+	/// Subtract two vectors (component wise)
+	ACPH_INLINE DVec3 &			operator -= (DVec3Arg inV2);
+
+	/// Divide (component wise)
+	ACPH_INLINE DVec3			operator / (DVec3Arg inV2) const;
+
+	/// Return the absolute value of each of the components
+	ACPH_INLINE DVec3			Abs() const;
+
+	/// Reciprocal vector (1 / value) for each of the components
+	ACPH_INLINE DVec3			Reciprocal() const;
+
+	/// Cross product
+	ACPH_INLINE DVec3			Cross(DVec3Arg inV2) const;
+
+	/// Dot product
+	ACPH_INLINE double			Dot(DVec3Arg inV2) const;
+
+	/// Squared length of vector
+	ACPH_INLINE double			LengthSq() const;
+
+	/// Length of vector
+	ACPH_INLINE double			Length() const;
+
+	/// Normalize vector
+	ACPH_INLINE DVec3			Normalized() const;
+
+	/// Component wise square root
+	ACPH_INLINE DVec3			Sqrt() const;
+
+	/// Get vector that contains the sign of each element (returns 1 if positive, -1 if negative)
+	ACPH_INLINE DVec3			GetSign() const;
+
+	/// To String
+	friend ostream &			operator << (ostream &inStream, DVec3Arg inV)
+	{
+		inStream << inV.mF64[0] << ", " << inV.mF64[1] << ", " << inV.mF64[2];
+		return inStream;
+	}
+
+	/// Internal helper function that checks that W is equal to Z, so e.g. dividing by it should not generate div by 0
+	ACPH_INLINE void				CheckW() const;
+
+	/// Internal helper function that ensures that the Z component is replicated to the W component to prevent divisions by zero
+	static ACPH_INLINE Type		sFixW(TypeArg inValue);
+
+	/// Representations of true and false for boolean operations
+	inline static const double	cTrue = BitCast<double>(~uint64(0));
+	inline static const double	cFalse = 0.0;
+
+	union
+	{
+		Type					mValue;
+		double					mF64[4];
+	};
+};
+
+static_assert(std::is_trivial<DVec3>(), "Is supposed to be a trivial type!");
+
+ACPH_NAMESPACE_END
+
+#include "DVec3.inl"
