@@ -1,0 +1,41 @@
+﻿// Copyright (c) Neofilisoft. All rights reserved.
+
+#pragma once
+
+#include "Engine/Core/Config/Settings.h"
+#include "Engine/Core/Types/String.h"
+#include "Engine/Core/Collections/Array.h"
+
+/// <summary>
+/// Layers and objects tags settings.
+/// </summary>
+API_CLASS(sealed, Namespace="BalmungEditor.Content.Settings") class FLAXENGINE_API LayersAndTagsSettings : public SettingsBase
+{
+    DECLARE_SCRIPTING_TYPE_MINIMAL(LayersAndTagsSettings);
+
+public:
+    /// <summary>
+    /// The tag names.
+    /// </summary>
+    Array<String> Tags;
+
+    /// <summary>
+    /// The layer names.
+    /// </summary>
+    String Layers[32];
+
+public:
+    /// <summary>
+    /// Gets the instance of the settings asset (default value if missing). Object returned by this method is always loaded with valid data to use.
+    /// </summary>
+    static LayersAndTagsSettings* Get();
+
+    // [SettingsBase]
+    void Apply() override;
+#if USE_EDITOR
+    void Serialize(SerializeStream& stream, const void* otherObj) override;
+#endif
+    void Deserialize(DeserializeStream& stream, ISerializeModifier* modifier) final override;
+};
+
+
