@@ -1,0 +1,19 @@
+﻿{
+  "Name": "Balmung",
+  "Version": {
+    "Major": 1,
+    "Minor": 11,
+    "Revision": 0,
+    "Build": 6802
+  },
+  "Company": "Neofilisoft",
+  "Copyright": "Copyright (c) Neofilisoft. All rights reserved. Based on Flax Engine by Wojciech Figat.",
+  "GameTarget": "BalmungGame",
+  "EditorTarget": "BalmungEditor",
+  "Configuration": {
+    "UseCSharp": true,
+    "UseLargeWorlds": false,
+    "UseDotNet": true
+  }
+}
+
