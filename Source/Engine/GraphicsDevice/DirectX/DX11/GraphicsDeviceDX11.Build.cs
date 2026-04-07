@@ -1,0 +1,24 @@
+﻿// Copyright (c) Neofilisoft. All rights reserved.
+
+using Balmung.Build.NativeCpp;
+
+/// <summary>
+/// DirectX 11 graphics backend module.
+/// </summary>
+public class GraphicsDeviceDX11 : GraphicsDeviceBaseModule
+{
+    /// <inheritdoc />
+    public override void Setup(BuildOptions options)
+    {
+        base.Setup(options);
+
+        options.PublicDefinitions.Add("GRAPHICS_API_DIRECTX11");
+        options.OutputFiles.Add("d3d11.lib");
+        if (nvapi.Use(options))
+            options.PrivateDependencies.Add("nvapi");
+        if (AGS.Use(options))
+            options.PrivateDependencies.Add("AGS");
+    }
+}
+
+
