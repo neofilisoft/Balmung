@@ -1,0 +1,22 @@
+﻿// Copyright (c) Wojciech Figat. All rights reserved.
+
+using Balmung.Build;
+
+/// <summary>
+/// https://github.com/recastnavigation/recastnavigation
+/// </summary>
+public class recastnavigation : ThirdPartyModule
+{
+    /// <inheritdoc />
+    public override void Init()
+    {
+        base.Init();
+
+        LicenseType = LicenseTypes.zLib;
+        LicenseFilePath = "License.txt";
+
+        // Merge third-party modules into engine binary
+        BinaryModuleName = "FlaxEngine";
+    }
+}
+
