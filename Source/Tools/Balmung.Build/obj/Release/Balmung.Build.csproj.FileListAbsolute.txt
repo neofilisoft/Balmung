@@ -1,0 +1,3 @@
+C:\Users\BEST\Desktop\Repo\FlaxEngine-1.11.6802\Source\Tools\Flax.Build\obj\Release\Balmung.Build.csproj.AssemblyReference.cache
+C:\Users\BEST\Desktop\Repo\FlaxEngine-1.11.6802\Source\Tools\Flax.Build\obj\Release\Balmung.Build.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\BEST\Desktop\Repo\FlaxEngine-1.11.6802\Source\Tools\Flax.Build\obj\Release\Balmung.Build.csproj.CoreCompileInputs.cache
