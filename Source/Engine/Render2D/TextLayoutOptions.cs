@@ -1,0 +1,19 @@
+﻿// Copyright (c) Neofilisoft. All rights reserved.
+
+namespace BalmungEngine
+{
+    partial struct TextLayoutOptions
+    {
+        /// <summary>
+        /// Gets the default layout.
+        /// </summary>
+        public static TextLayoutOptions Default => new TextLayoutOptions
+        {
+            Bounds = new Rectangle(0, 0, float.MaxValue, float.MaxValue),
+            Scale = 1.0f,
+            BaseLinesGapScale = 1.0f,
+        };
+    }
+}
+
+
