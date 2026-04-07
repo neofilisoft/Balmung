@@ -1,0 +1,22 @@
+﻿// Copyright (c) Wojciech Figat. All rights reserved.
+
+using Balmung.Build;
+
+/// <summary>
+/// https://github.com/microsoft/PixEvents
+/// </summary>
+public class WinPixEventRuntime : HeaderOnlyModule
+{
+    /// <inheritdoc />
+    public override void Init()
+    {
+        base.Init();
+
+        LicenseType = LicenseTypes.MIT;
+        LicenseFilePath = "LICENSE.txt";
+
+        // Merge third-party modules into engine binary
+        BinaryModuleName = "FlaxEngine";
+    }
+}
+
